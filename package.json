@@ -1,0 +1,65 @@
+{
+  "name": "graphql-server",
+  "version": "1.0.0",
+  "description": "Servidor Express Para GraphQL",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn --transpileOnly ./index.ts",
+    "prod": "tsc && node ./build/server.js",
+    "start": "node --inspect=5858 -r ts-node/register ./index.ts",
+    "start:watch": "nodemon",
+    "nodemon": "nodemon",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alberpad/graphql-server.git"
+  },
+  "keywords": [
+    "graphql",
+    "server",
+    "node",
+    "express"
+  ],
+  "author": "Alberto Padrón",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alberpad/graphql-server-ts/issues"
+  },
+  "homepage": "https://github.com/alberpad/graphql-server-ts#readme",
+  "dependencies": {
+    "@types/express": "^4.16.1",
+    "@types/express-graphql": "^0.8.0",
+    "@types/graphql": "^14.2.0",
+    "@types/mongoose": "^5.5.0",
+    "@types/node": "^12.0.0",
+    "apollo-server-express": "^2.5.0",
+    "express": "^4.16.4",
+    "express-graphql": "^0.8.0",
+    "graphql": "^14.3.0",
+    "graphql-import": "^0.7.1",
+    "graphql-tools": "^4.0.4",
+    "mongoose": "^5.5.6",
+    "nodemon": "^1.19.0"
+  },
+  "devDependencies": {
+    "@divyenduz/ts-graphql-plugin": "^0.1.0",
+    "ts-node-dev": "^1.0.0-pre.35",
+    "typescript": "^3.4.5"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      ".git",
+      "node_modules"
+    ],
+    "watch": [
+      "data",
+      "."
+    ],
+    "exec": "npm start",
+    "ext": "ts"
+  }
+}
