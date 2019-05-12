@@ -1,40 +1,21 @@
-import mongoose, { ModelOptions } from "mongoose";
-import { Clientes } from "./db";
+import { Clientes, Productos } from "./db";
 import { rejects } from "assert";
-
-class Cliente implements ICliente {
-  nombre: string;
-  apellido: string;
-  empresa: string;
-  emails: string[];
-  id: string;
-  edad: number;
-  tipo: TipoCliente;
-  pedidos: IPedidoInput[];
-
-  constructor(id: string, clienteInput: IClienteInput) {
-    this.id = id;
-    this.nombre = clienteInput.nombre;
-    this.apellido = clienteInput.apellido;
-    this.emails = clienteInput.emails;
-    this.empresa = clienteInput.empresa;
-    this.edad = clienteInput.edad;
-    this.tipo = clienteInput.tipo;
-    this.pedidos = clienteInput.pedidos;
-  }
-}
-
-// const clientesDB: TClientesDB = {};
 
 // Configurando resolvers según requerimiento de grapgql-tools
 export const resolvers = {
   Query: {
-    getClientes: (root: any, { limite }: { limite: number }) => {
+    // CLIENTES
+    getClientes: (
+      root: any,
+      { limite, offset }: { limite: number; offset: number }
+    ) => {
       return new Promise((resolve: any, object) => {
         Clientes.find({}, (error: any, clientes: ICliente[]) => {
           if (error) rejects(error);
           else resolve(clientes);
-        });
+        })
+          .limit(limite)
+          .skip(offset);
       });
     },
     getCliente: (root: any, { id }: { id: string }) => {
@@ -44,9 +25,48 @@ export const resolvers = {
           else resolve(cliente);
         });
       });
+    },
+    totalClientes: (root: any) => {
+      return new Promise((resolve: any, object) => {
+        Clientes.countDocuments({}, (error: any, count: number) => {
+          if (error) rejects(error);
+          else resolve(count);
+        });
+      });
+    },
+    // PRODUCTOS
+    getProductos: (
+      root: any,
+      { limite, offset }: { limite: number; offset: number }
+    ) => {
+      return new Promise((resolve: any, object) => {
+        Productos.find({}, (error: any, productos: IProducto[]) => {
+          if (error) rejects(error);
+          else resolve(productos);
+        })
+          .limit(limite)
+          .skip(offset);
+      });
+    },
+    getProducto: (root: any, { id }: { id: string }) => {
+      return new Promise((resolve: any, object) => {
+        Productos.findById(id, (error: any, producto: IProducto) => {
+          if (error) rejects(error);
+          else resolve(producto);
+        });
+      });
+    },
+    totalProductos: (root: any) => {
+      return new Promise((resolve: any, object) => {
+        Productos.countDocuments({}, (error: any, count: number) => {
+          if (error) rejects(error);
+          else resolve(count);
+        });
+      });
     }
   },
   Mutation: {
+    // CLIENTES
     crearCliente: (root: any, { input }: { input: IClienteInput }) => {
       const nuevoCliente = new Clientes({
         nombre: input.nombre,
@@ -85,6 +105,42 @@ export const resolvers = {
           else resolve(`Cliente ${id} eliminado`);
         });
       });
+    },
+    // PRODUCTOS
+    nuevoProducto: (root: any, { input }: { input: IProductoInput }) => {
+      const nuevoProducto = new Productos({
+        nombre: input.nombre,
+        precio: input.precio,
+        stock: input.stock
+      });
+      nuevoProducto.id = nuevoProducto._id;
+      return new Promise((resolve: any, object) => {
+        nuevoProducto.save((error: any) => {
+          if (error) rejects(error);
+          else resolve(nuevoProducto);
+        });
+      });
+    },
+    actualizarProducto: (root: any, { input }: { input: IProducto }) => {
+      return new Promise((resolve: any, object) => {
+        Productos.findOneAndUpdate(
+          { _id: input.id },
+          input,
+          { new: true },
+          (error: any, producto) => {
+            if (error) rejects(error);
+            else resolve(producto);
+          }
+        );
+      });
+    },
+    eliminarProducto: (root: any, { id }: IProducto) => {
+      return new Promise((resolve: any, object) => {
+        Productos.findOneAndRemove({ _id: id }, error => {
+          if (error) rejects(error);
+          else resolve(`Producto ${id} eliminado`);
+        });
+      });
     }
   }
 };
@@ -103,13 +159,24 @@ interface IClienteInput {
   nombre: string;
   apellido: string;
   empresa: string;
-  emails: string[];
+  emails: Email[];
   edad: number;
   tipo: TipoCliente;
   pedidos: IPedidoInput[];
 }
-
+interface Email {
+  email: String;
+}
 interface ICliente extends IClienteInput {
+  id: string;
+}
+
+interface IProductoInput {
+  nombre: string;
+  precio: number;
+  stock: number;
+}
+interface IProducto extends IProductoInput {
   id: string;
 }
 
