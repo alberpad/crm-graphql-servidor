@@ -1,5 +1,5 @@
 // DB MONGOOSE
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 mongoose.Promise = global.Promise;
 
@@ -23,11 +23,20 @@ const productosSchema = new mongoose.Schema({
   precio: Number,
   stock: Number
 });
+// Definir el schema de pedidos
+const pedidosSchema = new mongoose.Schema({
+  productos: Array,
+  total: Number,
+  fecha: Date,
+  cliente: String,
+  estado: String
+});
 
 const Clientes = mongoose.model("clientes", clientesSchema);
 const Productos = mongoose.model("productos", productosSchema);
+const Pedidos = mongoose.model("pedidos", pedidosSchema);
 
-export { Clientes, Productos };
+export { Clientes, Productos, Pedidos };
 
 interface IProductoInput {
   nombre: string;

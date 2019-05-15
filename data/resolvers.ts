@@ -1,4 +1,4 @@
-import { Clientes, Productos } from "./db";
+import { Clientes, Productos, Pedidos } from "./db";
 import { rejects } from "assert";
 
 // Configurando resolvers según requerimiento de grapgql-tools
@@ -74,8 +74,7 @@ export const resolvers = {
         empresa: input.empresa,
         emails: input.emails,
         edad: input.edad,
-        tipo: input.tipo,
-        pedidos: input.pedidos
+        tipo: input.tipo
       });
       nuevoCliente.id = nuevoCliente._id;
       return new Promise((resolve: any, object) => {
@@ -141,6 +140,35 @@ export const resolvers = {
           else resolve(`Producto ${id} eliminado`);
         });
       });
+    },
+    // PEDIDOS
+    nuevoPedido: (root: any, { input }: { input: IPedidoInput }) => {
+      const nuevoPedido = new Pedidos({
+        productos: input.productos,
+        total: input.total,
+        cliente: input.cliente,
+        estado: "PENDIENTE", // Default value
+        fecha: new Date()
+      } as IPedidoInput);
+      nuevoPedido.id = nuevoPedido._id;
+      return new Promise((resolve: any, object) => {
+        //Actualizar las existencias
+        input.productos.forEach(producto => {
+          Productos.updateOne(
+            { _id: producto.id },
+            {
+              $inc: { stock: -producto.cantidad }
+            },
+            function(error) {
+              if (error) return new Error(error);
+            }
+          );
+        });
+        nuevoPedido.save((error: any) => {
+          if (error) rejects(error);
+          else resolve(nuevoPedido);
+        });
+      });
     }
   }
 };
@@ -151,10 +179,6 @@ enum TipoCliente {
   PREMIUM
 }
 
-interface IPedidoInput {
-  producto: string;
-  precio: number;
-}
 interface IClienteInput {
   nombre: string;
   apellido: string;
@@ -162,7 +186,6 @@ interface IClienteInput {
   emails: Email[];
   edad: number;
   tipo: TipoCliente;
-  pedidos: IPedidoInput[];
 }
 interface Email {
   email: String;
@@ -179,7 +202,17 @@ interface IProductoInput {
 interface IProducto extends IProductoInput {
   id: string;
 }
-
-type TClientesDB = {
-  [id: string]: IClienteInput;
-};
+interface IPedidoInput {
+  productos: IPedidoProductoInput[];
+  total: number;
+  fecha: Date;
+  cliente: string;
+  estado: string;
+}
+interface IPedido extends IPedidoInput {
+  id: string;
+}
+interface IPedidoProductoInput {
+  id: string;
+  cantidad: number;
+}

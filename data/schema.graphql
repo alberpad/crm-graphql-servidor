@@ -6,15 +6,28 @@ type Cliente {
   emails: [Email]
   edad: Int
   tipo: TipoCliente
-  pedidos: [Pedido]
 }
+
 type Pedido {
-  producto: String
-  precio: Int
+  id: ID
+  productos: [PedidoProducto]
+  total: Int
+  fecha: String
+  cliente: ID
+  estado: EstadoPedido
+}
+type PedidoProducto {
+  id: ID
+  cantidad: Int
 }
 enum TipoCliente {
   BASICO
   PREMIUM
+}
+enum EstadoPedido {
+  PENDIENTE
+  COMPLETADO
+  CANCELADO
 }
 type Email {
   email: String
@@ -43,12 +56,8 @@ input ClienteInput {
   emails: [EmailInput]
   edad: Int
   tipo: TipoCliente
-  pedidos: [PedidoInput]
 }
-input PedidoInput {
-  producto: String
-  precio: Int
-}
+
 # Este comentario se ignora
 input EmailInput {
   email: String
@@ -58,6 +67,18 @@ input ProductoInput {
   nombre: String!
   precio: Int!
   stock: Int!
+}
+input PedidoInput {
+  id: ID
+  productos: [PedidoProductoInput]
+  total: Int
+  fecha: String
+  cliente: ID
+  estado: EstadoPedido
+}
+input PedidoProductoInput {
+  id: ID
+  cantidad: Int
 }
 
 """
@@ -70,7 +91,10 @@ type Mutation {
   crearCliente(input: ClienteInput): Cliente
   actualizarCliente(input: ClienteInput): Cliente
   eliminarCliente(id: ID!): String
+  #productos
   nuevoProducto(input: ProductoInput): Producto
   actualizarProducto(input: ProductoInput): Producto
   eliminarProducto(id: ID!): String
+  #pedidos
+  nuevoPedido(input: PedidoInput): Pedido
 }
