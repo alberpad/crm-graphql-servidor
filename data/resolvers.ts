@@ -37,10 +37,18 @@ export const resolvers = {
     // PRODUCTOS
     getProductos: (
       root: any,
-      { limite, offset }: { limite: number; offset: number }
+      {
+        limite,
+        offset,
+        stock
+      }: { limite: number; offset: number; stock: boolean }
     ) => {
+      let filtro: any;
+      if (stock) {
+        filtro = { stock: { $gt: 0 } };
+      }
       return new Promise((resolve: any, object) => {
-        Productos.find({}, (error: any, productos: IProducto[]) => {
+        Productos.find(filtro, (error: any, productos: IProducto[]) => {
           if (error) rejects(error);
           else resolve(productos);
         })
@@ -62,6 +70,18 @@ export const resolvers = {
           if (error) rejects(error);
           else resolve(count);
         });
+      });
+    },
+    // PEDIDOS
+    getPedidos: (root: any, { clienteId }: { clienteId: string }) => {
+      return new Promise((resolve: any, object) => {
+        Pedidos.find(
+          { cliente: clienteId },
+          (error: any, pedidos: IPedido[]) => {
+            if (error) rejects(error);
+            else resolve(pedidos);
+          }
+        );
       });
     }
   },
