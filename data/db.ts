@@ -1,5 +1,6 @@
 // DB MONGOOSE
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 mongoose.Promise = global.Promise;
 
@@ -28,21 +29,48 @@ const pedidosSchema = new mongoose.Schema({
   productos: Array,
   total: Number,
   fecha: Date,
-  cliente: String,
+  cliente: mongoose.Types.ObjectId,
   estado: String
+});
+
+// Definir el schema de usuario
+const usuariosSchema = new mongoose.Schema({
+  usuario: String,
+  password: String
+});
+
+// Hashear password
+usuariosSchema.pre<IUsuario>("save", function(next) {
+  const user = this;
+  if (!user.isModified("password")) {
+    return next();
+  }
+  bcrypt.genSalt(10, (err, salt) => {
+    if (err) return next(err);
+    bcrypt.hash(user.password, salt, (err, hash) => {
+      if (err) return next(err);
+      user.password = hash;
+      next();
+    });
+  });
 });
 
 const Clientes = mongoose.model("clientes", clientesSchema);
 const Productos = mongoose.model("productos", productosSchema);
 const Pedidos = mongoose.model("pedidos", pedidosSchema);
+const Usuarios = mongoose.model<IUsuario>("usuarios", usuariosSchema);
 
-export { Clientes, Productos, Pedidos };
+export { Clientes, Productos, Pedidos, Usuarios };
 
-interface IProductoInput {
-  nombre: string;
-  precio: number;
-  stock: number;
-}
-interface IProducto extends IProductoInput {
-  id: string;
+// interface IProductoInput {
+//   nombre: string;
+//   precio: number;
+//   stock: number;
+// }
+// interface IProducto extends IProductoInput {
+//   id: string;
+// }
+interface IUsuario extends mongoose.Document {
+  usuario: string;
+  password: string;
 }

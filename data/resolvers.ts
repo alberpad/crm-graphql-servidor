@@ -1,5 +1,10 @@
-import { Clientes, Productos, Pedidos } from "./db";
+import { Clientes, Productos, Pedidos, Usuarios } from "./db";
 import { rejects } from "assert";
+import bcrypt from "bcrypt";
+
+import dotenv from "dotenv";
+dotenv.config({ path: "variables.env" });
+import jwt from "jsonwebtoken";
 
 // Configurando resolvers según requerimiento de grapgql-tools
 export const resolvers = {
@@ -32,6 +37,42 @@ export const resolvers = {
           if (error) rejects(error);
           else resolve(count);
         });
+      });
+    },
+    topClientes: (root: any) => {
+      return new Promise((resolve: any, object) => {
+        Pedidos.aggregate(
+          [
+            {
+              $match: { estado: "COMPLETADO" }
+            },
+            {
+              $group: {
+                // Crea una nueva tabla, por tanto cambia la situación del id del cliente que pasa de cliente a _id
+                _id: "$cliente",
+                total: { $sum: "$total" }
+              }
+            },
+            {
+              $lookup: {
+                from: "clientes",
+                localField: "_id",
+                foreignField: "_id",
+                as: "cliente"
+              }
+            },
+            {
+              $sort: { total: -1 } // orden descendente
+            },
+            {
+              $limit: 10
+            }
+          ],
+          (error: any, resultado: IMejorCliente) => {
+            if (error) rejects(error);
+            else resolve(resultado);
+          }
+        );
       });
     },
     // PRODUCTOS
@@ -172,23 +213,74 @@ export const resolvers = {
       } as IPedidoInput);
       nuevoPedido.id = nuevoPedido._id;
       return new Promise((resolve: any, object) => {
+        nuevoPedido.save((error: any) => {
+          if (error) rejects(error);
+          else resolve(nuevoPedido);
+        });
+      });
+    },
+    actualizarPedido: (root: any, { input }: { input: IPedido }) => {
+      return new Promise((resolve: any, object) => {
+        const { estado } = input;
+        let instruccion: string;
+        if (estado === "COMPLETADO") instruccion = "-";
+        if (estado === "CANCELADO") instruccion = "+";
         //Actualizar las existencias
         input.productos.forEach(producto => {
           Productos.updateOne(
             { _id: producto.id },
             {
-              $inc: { stock: -producto.cantidad }
+              $inc: { stock: `${instruccion}${producto.cantidad}` }
             },
             function(error) {
               if (error) return new Error(error);
             }
           );
         });
-        nuevoPedido.save((error: any) => {
-          if (error) rejects(error);
-          else resolve(nuevoPedido);
-        });
+        Pedidos.findOneAndUpdate(
+          { _id: input.id },
+          input,
+          { new: true },
+          (error: any, pedido) => {
+            if (error) rejects(error);
+            else resolve(pedido);
+          }
+        );
       });
+    },
+    // USUARIOS
+    crearUsuario: async (root: any, { input }: { input: IUsuarioInput }) => {
+      const { usuario } = input;
+      const existeUsuario = await Usuarios.findOne({ usuario });
+      if (existeUsuario) {
+        throw new Error("El usuario ya existe");
+      }
+      const nuevoUsuario = await new Usuarios(input).save();
+      return "Usuario creado correctamente";
+    },
+    autenticarUsuario: async (
+      root: any,
+      { input }: { input: IUsuarioInput }
+    ) => {
+      const { usuario } = input;
+      const nombreUsuario = await Usuarios.findOne({ usuario });
+      if (!nombreUsuario) {
+        throw new Error("Usuario no encontrado");
+      }
+      const passwordCorrecto = await bcrypt.compare(
+        input.password,
+        nombreUsuario.password
+      );
+      if (!passwordCorrecto) {
+        throw new Error("Password Incorrecto");
+      }
+      const secreto = process.env.SECRETO;
+      const expiresIn = "1d";
+      const nombre_usuario = nombreUsuario.usuario;
+      if (!secreto) throw new Error("No se puede generar el Token");
+      return {
+        token: jwt.sign({ nombre_usuario }, secreto, { expiresIn })
+      };
     }
   }
 };
@@ -213,6 +305,10 @@ interface Email {
 interface ICliente extends IClienteInput {
   id: string;
 }
+interface IMejorCliente {
+  total: number;
+  cliente: ICliente[];
+}
 
 interface IProductoInput {
   nombre: string;
@@ -235,4 +331,8 @@ interface IPedido extends IPedidoInput {
 interface IPedidoProductoInput {
   id: string;
   cantidad: number;
+}
+interface IUsuarioInput {
+  usuario: string;
+  password: string;
 }

@@ -38,6 +38,14 @@ type Producto {
   precio: Int
   stock: Int
 }
+type MejorCliente {
+  total: Float
+  cliente: [Cliente]
+}
+
+type Token {
+  token: String
+}
 
 type Query {
   # Dejar limite opcional para poder obviarlo y traer todos los clientes
@@ -49,7 +57,8 @@ type Query {
   getProducto(id: ID): Producto
   totalProductos: Int
   #Pedidos
-  getPedidos(clienteId: String): [Pedido]
+  getPedidos(clienteId: ID): [Pedido]
+  topClientes: [MejorCliente]
 }
 input ClienteInput {
   id: ID
@@ -84,6 +93,11 @@ input PedidoProductoInput {
   cantidad: Int
 }
 
+input UsuarioInput {
+  usuario: String!
+  password: String!
+}
+
 """
 Mutations para crar nuevos clientes
 """
@@ -100,4 +114,7 @@ type Mutation {
   eliminarProducto(id: ID!): String
   #pedidos
   nuevoPedido(input: PedidoInput): Pedido
+  actualizarPedido(input: PedidoInput): Pedido
+  crearUsuario(input: UsuarioInput): String
+  autenticarUsuario(input: UsuarioInput): Token
 }
