@@ -46,6 +46,9 @@ type MejorCliente {
 type Token {
   token: String
 }
+type Usuario {
+  usuario: String
+}
 
 type Query {
   # Dejar limite opcional para poder obviarlo y traer todos los clientes
@@ -59,6 +62,8 @@ type Query {
   #Pedidos
   getPedidos(clienteId: ID): [Pedido]
   topClientes: [MejorCliente]
+  #Usuarios
+  getUsuario: Usuario
 }
 input ClienteInput {
   id: ID

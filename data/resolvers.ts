@@ -124,6 +124,14 @@ export const resolvers = {
           }
         );
       });
+    },
+    // AUTENTICACION
+    getUsuario: (root: any, args: any, { usuarioActual }: Express.Request) => {
+      if (!usuarioActual) return null;
+      console.log(usuarioActual);
+      // Obtener el usuario actual del request del JWT verificado
+      const usuario = Usuarios.findOne({ usuario: usuarioActual.usuario });
+      return usuario;
     }
   },
   Mutation: {
