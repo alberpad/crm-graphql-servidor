@@ -5,9 +5,11 @@ import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { typeDefs } from "./data/schema";
 import { resolvers } from "./data/resolvers";
+import { RequestCustom, IUsuarioActual } from "./types";
 
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { ExpressContext } from "apollo-server-express/dist/ApolloServer";
 dotenv.config({ path: "varialbes.env" });
 
 // Crear una instancia de express
@@ -16,7 +18,7 @@ const app: express.Application = express();
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: async ({ req }) => {
+  context: async ({ req }: ExpressContext) => {
     const token = req.headers["authorization"];
     if (token !== "null" && token !== undefined) {
       try {
@@ -28,7 +30,8 @@ const server = new ApolloServer({
         // Opción1: Añadir la propiedad en la Interfaz Request en el index.d.ts (en node_modules -> Express.Request)
         // Opción2: añadir la interfaz Express a un archivo de tipos (types.d.ts) e indicar este archivo en el tsconfig en "files".
         // Agregamos el usuario actual al request
-        req.usuarioActual = usuarioActual as TypesApp.IUsuarioActual;
+        const reqCustom = req as RequestCustom;
+        reqCustom.usuarioActual = usuarioActual as IUsuarioActual;
         return {
           usuarioActual
         };

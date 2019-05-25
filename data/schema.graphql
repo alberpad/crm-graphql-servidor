@@ -1,5 +1,6 @@
 type Cliente {
   id: ID
+  idVendedor: ID
   nombre: String
   apellido: String
   empresa: String
@@ -48,11 +49,14 @@ type Token {
 }
 type Usuario {
   usuario: String
+  id: ID
+  nombre: String
+  rol: String
 }
 
 type Query {
   # Dejar limite opcional para poder obviarlo y traer todos los clientes
-  getClientes(limite: Int, offset: Int): [Cliente]
+  getClientes(limite: Int, offset: Int, idVendedor: String): [Cliente]
   getCliente(id: ID): Cliente
   totalClientes: Int
   #Productos
@@ -67,6 +71,7 @@ type Query {
 }
 input ClienteInput {
   id: ID
+  idVendedor: ID
   nombre: String!
   apellido: String!
   empresa: String
@@ -92,6 +97,7 @@ input PedidoInput {
   fecha: String
   cliente: ID
   estado: EstadoPedido
+  idVendedor: ID
 }
 input PedidoProductoInput {
   id: ID
@@ -99,6 +105,13 @@ input PedidoProductoInput {
 }
 
 input UsuarioInput {
+  usuario: String!
+  password: String!
+  nombre: String!
+  rol: String!
+}
+
+input AutenticarInput {
   usuario: String!
   password: String!
 }
@@ -121,5 +134,5 @@ type Mutation {
   nuevoPedido(input: PedidoInput): Pedido
   actualizarPedido(input: PedidoInput): Pedido
   crearUsuario(input: UsuarioInput): String
-  autenticarUsuario(input: UsuarioInput): Token
+  autenticarUsuario(input: AutenticarInput): Token
 }

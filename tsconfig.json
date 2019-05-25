@@ -64,6 +64,5 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
   "include": ["data/**/*.ts", "./index.ts"],
-  "exclude": ["node_modules", ".vscode"],
-  "files": ["types.d.ts"]
+  "exclude": ["node_modules", ".vscode"]
 }

@@ -16,7 +16,8 @@ const clientesSchema = new mongoose.Schema({
   emails: Array,
   edad: Number,
   tipo: String,
-  pedidos: Array
+  pedidos: Array,
+  idVendedor: mongoose.Types.ObjectId
 });
 // Definir el schema de productos
 const productosSchema = new mongoose.Schema({
@@ -30,13 +31,16 @@ const pedidosSchema = new mongoose.Schema({
   total: Number,
   fecha: Date,
   cliente: mongoose.Types.ObjectId,
-  estado: String
+  estado: String,
+  idVendedor: mongoose.Types.ObjectId
 });
 
 // Definir el schema de usuario
 const usuariosSchema = new mongoose.Schema({
   usuario: String,
-  password: String
+  nombre: String,
+  password: String,
+  rol: String
 });
 
 // Hashear password
@@ -71,6 +75,9 @@ export { Clientes, Productos, Pedidos, Usuarios };
 //   id: string;
 // }
 interface IUsuario extends mongoose.Document {
+  id: string;
   usuario: string;
   password: string;
+  nombre: string;
+  rol: string;
 }

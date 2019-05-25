@@ -1,10 +1,13 @@
 import { Clientes, Productos, Pedidos, Usuarios } from "./db";
 import { rejects } from "assert";
 import bcrypt from "bcrypt";
+import mongoose from "mongoose";
+const ObjectId = mongoose.Types.ObjectId;
 
 import dotenv from "dotenv";
 dotenv.config({ path: "variables.env" });
 import jwt from "jsonwebtoken";
+import { RequestCustom } from "../types";
 
 // Configurando resolvers según requerimiento de grapgql-tools
 export const resolvers = {
@@ -12,10 +15,18 @@ export const resolvers = {
     // CLIENTES
     getClientes: (
       root: any,
-      { limite, offset }: { limite: number; offset: number }
+      {
+        limite,
+        offset,
+        idVendedor
+      }: { limite: number; offset: number; idVendedor: string }
     ) => {
+      let filtro: any;
+      if (idVendedor) {
+        filtro = { idVendedor: new ObjectId(idVendedor) };
+      }
       return new Promise((resolve: any, object) => {
-        Clientes.find({}, (error: any, clientes: ICliente[]) => {
+        Clientes.find(filtro, (error: any, clientes: ICliente[]) => {
           if (error) rejects(error);
           else resolve(clientes);
         })
@@ -23,6 +34,7 @@ export const resolvers = {
           .skip(offset);
       });
     },
+
     getCliente: (root: any, { id }: { id: string }) => {
       return new Promise((resolve: any, object) => {
         Clientes.findById(id, (error: any, cliente: ICliente) => {
@@ -126,11 +138,13 @@ export const resolvers = {
       });
     },
     // AUTENTICACION
-    getUsuario: (root: any, args: any, { usuarioActual }: Express.Request) => {
+    getUsuario: (root: any, args: any, { usuarioActual }: RequestCustom) => {
       if (!usuarioActual) return null;
-      console.log(usuarioActual);
       // Obtener el usuario actual del request del JWT verificado
-      const usuario = Usuarios.findOne({ usuario: usuarioActual.usuario });
+      const usuario = Usuarios.findOne({
+        usuario: usuarioActual.nombre_usuario
+      });
+      // console.log(usuario);
       return usuario;
     }
   },
@@ -139,6 +153,7 @@ export const resolvers = {
     crearCliente: (root: any, { input }: { input: IClienteInput }) => {
       const nuevoCliente = new Clientes({
         nombre: input.nombre,
+        idVendedor: input.idVendedor,
         apellido: input.apellido,
         empresa: input.empresa,
         emails: input.emails,
@@ -217,7 +232,8 @@ export const resolvers = {
         total: input.total,
         cliente: input.cliente,
         estado: "PENDIENTE", // Default value
-        fecha: new Date()
+        fecha: new Date(),
+        idVendedor: input.idVendedor
       } as IPedidoInput);
       nuevoPedido.id = nuevoPedido._id;
       return new Promise((resolve: any, object) => {
@@ -268,9 +284,10 @@ export const resolvers = {
     },
     autenticarUsuario: async (
       root: any,
-      { input }: { input: IUsuarioInput }
+      { input }: { input: IAutenticarInput }
     ) => {
       const { usuario } = input;
+      console.log(usuario);
       const nombreUsuario = await Usuarios.findOne({ usuario });
       if (!nombreUsuario) {
         throw new Error("Usuario no encontrado");
@@ -300,6 +317,7 @@ enum TipoCliente {
 }
 
 interface IClienteInput {
+  idVendedor: string;
   nombre: string;
   apellido: string;
   empresa: string;
@@ -332,6 +350,7 @@ interface IPedidoInput {
   fecha: Date;
   cliente: string;
   estado: string;
+  idVendedor: string;
 }
 interface IPedido extends IPedidoInput {
   id: string;
@@ -341,6 +360,18 @@ interface IPedidoProductoInput {
   cantidad: number;
 }
 interface IUsuarioInput {
+  usuario: string;
+  password: string;
+  nombre: string;
+  rol: string;
+}
+interface IUsuario {
+  usuario: string;
+  nombre: string;
+  id: string;
+  rol: string;
+}
+interface IAutenticarInput {
   usuario: string;
   password: string;
 }
