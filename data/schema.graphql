@@ -44,6 +44,11 @@ type MejorCliente {
   cliente: [Cliente]
 }
 
+type MejorVendedor {
+  total: Float
+  vendedor: [Usuario]
+}
+
 type Token {
   token: String
 }
@@ -58,7 +63,7 @@ type Query {
   # Dejar limite opcional para poder obviarlo y traer todos los clientes
   getClientes(limite: Int, offset: Int, idVendedor: String): [Cliente]
   getCliente(id: ID): Cliente
-  totalClientes: Int
+  totalClientes(idVendedor: String): Int
   #Productos
   getProductos(limite: Int, offset: Int, stock: Boolean): [Producto]
   getProducto(id: ID): Producto
@@ -66,6 +71,7 @@ type Query {
   #Pedidos
   getPedidos(clienteId: ID): [Pedido]
   topClientes: [MejorCliente]
+  topVendedores: [MejorVendedor]
   #Usuarios
   getUsuario: Usuario
 }

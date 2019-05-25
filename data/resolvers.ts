@@ -43,9 +43,13 @@ export const resolvers = {
         });
       });
     },
-    totalClientes: (root: any) => {
+    totalClientes: (root: any, { idVendedor }: { idVendedor: string }) => {
+      let filtro: any;
+      if (idVendedor) {
+        filtro = { idVendedor: new ObjectId(idVendedor) };
+      }
       return new Promise((resolve: any, object) => {
-        Clientes.countDocuments({}, (error: any, count: number) => {
+        Clientes.countDocuments(filtro, (error: any, count: number) => {
           if (error) rejects(error);
           else resolve(count);
         });
@@ -137,7 +141,7 @@ export const resolvers = {
         );
       });
     },
-    // AUTENTICACION
+    // AUTENTICACION Y USUARIOS
     getUsuario: (root: any, args: any, { usuarioActual }: RequestCustom) => {
       if (!usuarioActual) return null;
       // Obtener el usuario actual del request del JWT verificado
@@ -146,6 +150,42 @@ export const resolvers = {
       });
       // console.log(usuario);
       return usuario;
+    },
+    topVendedores: (root: any) => {
+      return new Promise((resolve: any, object) => {
+        Pedidos.aggregate(
+          [
+            {
+              $match: { estado: "COMPLETADO" }
+            },
+            {
+              $group: {
+                // Crea una nueva tabla, por tanto cambia la situación del id del cliente que pasa de cliente a _id
+                _id: "$idVendedor",
+                total: { $sum: "$total" }
+              }
+            },
+            {
+              $lookup: {
+                from: "usuarios",
+                localField: "_id",
+                foreignField: "_id",
+                as: "vendedor"
+              }
+            },
+            {
+              $sort: { total: -1 } // orden descendente
+            },
+            {
+              $limit: 10
+            }
+          ],
+          (error: any, resultado: IMejorVendedor) => {
+            if (error) rejects(error);
+            else resolve(resultado);
+          }
+        );
+      });
     }
   },
   Mutation: {
@@ -334,6 +374,11 @@ interface ICliente extends IClienteInput {
 interface IMejorCliente {
   total: number;
   cliente: ICliente[];
+}
+
+interface IMejorVendedor {
+  total: number;
+  vendedor: IUsuario[];
 }
 
 interface IProductoInput {
